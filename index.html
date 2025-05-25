@@ -2,19 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>3D Parallax Temperament Cloud</title>
+  <title></title>
   <style>
-    html, body {
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
       height: 100%;
       overflow: hidden;
       background: url("bckg.png") center/cover no-repeat fixed;
       backdrop-filter: blur(2px);
     }
+
     canvas {
       display: block;
       cursor: grab;
     }
+
     canvas:active {
       cursor: grabbing;
     }
@@ -30,7 +38,7 @@ const ctx = canvas.getContext("2d");
 let width = canvas.width = window.innerWidth;
 let height = canvas.height = window.innerHeight;
 
-let scale = 1;
+let scale = 0.3; // More zoomed out
 let camera = { x: 0, y: 0 };
 let targetCamera = { x: 0, y: 0 };
 let isDragging = false;
@@ -73,6 +81,7 @@ function placeIn3DSpace(data) {
     const z = item.intimacy_score;
     const img = new Image();
     img.src = `images/${item.filename}`;
+    img.onerror = () => console.error("Failed to load image:", img.src);
     return {
       ...item,
       img,
@@ -92,11 +101,9 @@ function draw() {
   const focused = images.find(i => i.isFocused);
   const backgroundImages = images.filter(i => !i.isFocused);
 
-  // Smooth camera move
   camera.x += (targetCamera.x - camera.x) * 0.1;
   camera.y += (targetCamera.y - camera.y) * 0.1;
 
-  // Draw background images
   backgroundImages.sort((a, b) => a.z - b.z).forEach(item => {
     const parallax = 1 - (item.z / 10) * PARALLAX_INTENSITY;
     const px = width / 2 + (item.baseX - camera.x) * parallax * scale;
@@ -111,19 +118,16 @@ function draw() {
     item.size = finalSize;
   });
 
-  // Dim + blur background
   if (focused) {
     ctx.fillStyle = "rgba(0,0,0,0.4)";
     ctx.fillRect(0, 0, width, height);
 
-    // Snapshot background
     const snapshot = ctx.getImageData(0, 0, width, height);
     ctx.filter = "blur(6px)";
     ctx.putImageData(snapshot, 0, 0);
     ctx.filter = "none";
   }
 
-  // Draw focused image on top
   if (focused) {
     const parallax = 1 - (focused.z / 10) * PARALLAX_INTENSITY;
     const px = width / 2 + (focused.baseX - camera.x) * parallax * scale;
@@ -139,7 +143,6 @@ function draw() {
     focused.size = focused.animatedSize;
   }
 
-  // Tooltip
   if (hoveredItem && !hoveredItem.isFocused) {
     const lines = [
       `Temperament: ${hoveredItem.temperament_score}`,
@@ -210,7 +213,8 @@ canvas.addEventListener("mousemove", (e) => {
 canvas.addEventListener("mouseup", () => isDragging = false);
 canvas.addEventListener("mouseleave", () => isDragging = false);
 
-canvas.addEventListener("click", (e) => {
+// 🔁 Only double-click triggers focus mode
+canvas.addEventListener("dblclick", (e) => {
   const mx = e.clientX;
   const my = e.clientY;
   let clicked = null;
@@ -238,7 +242,6 @@ canvas.addEventListener("click", (e) => {
   draw();
 });
 
-// Escape key to unfocus
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     images.forEach(i => i.isFocused = false);
@@ -252,7 +255,6 @@ window.addEventListener("resize", () => {
   draw();
 });
 
-// Load and go
 let images = [];
 loadData().then(data => {
   images = placeIn3DSpace(data);
