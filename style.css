@@ -1,0 +1,17 @@
+html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: url("bckg.png") center/cover no-repeat fixed;
+    backdrop-filter: blur(2px);
+  }
+  
+  canvas {
+    display: block;
+    cursor: grab;
+  }
+  
+  canvas:active {
+    cursor: grabbing;
+  }
+  

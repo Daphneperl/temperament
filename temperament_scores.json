@@ -1,0 +1,798 @@
+{
+  "image162.jpg": {
+    "temperament_score": 1,
+    "intimacy_score": 10
+  },
+  "image159.jpg": {
+    "temperament_score": 2,
+    "intimacy_score": 5
+  },
+  "image285.png": {
+    "temperament_score": 3,
+    "intimacy_score": 9
+  },
+  "image192.jpg": {
+    "temperament_score": 4,
+    "intimacy_score": 8
+  },
+  "image114.jpg": {
+    "temperament_score": 5,
+    "intimacy_score": 2
+  },
+  "image288.png": {
+    "temperament_score": 6,
+    "intimacy_score": 2
+  },
+  "image336.png": {
+    "temperament_score": 7,
+    "intimacy_score": 8
+  },
+  "image128.jpg": {
+    "temperament_score": 8,
+    "intimacy_score": 6
+  },
+  "image101.jpg": {
+    "temperament_score": 9,
+    "intimacy_score": 7
+  },
+  "image281.png": {
+    "temperament_score": 10,
+    "intimacy_score": 3
+  },
+  "image135.jpg": {
+    "temperament_score": 11,
+    "intimacy_score": 3
+  },
+  "image1.jpg": {
+    "temperament_score": 12,
+    "intimacy_score": 1
+  },
+  "image125.jpg": {
+    "temperament_score": 13,
+    "intimacy_score": 9
+  },
+  "image350.png": {
+    "temperament_score": 14,
+    "intimacy_score": 4
+  },
+  "image330.png": {
+    "temperament_score": 15,
+    "intimacy_score": 7
+  },
+  "image358.png": {
+    "temperament_score": 16,
+    "intimacy_score": 3
+  },
+  "image344.png": {
+    "temperament_score": 17,
+    "intimacy_score": 6
+  },
+  "image122.jpg": {
+    "temperament_score": 18,
+    "intimacy_score": 8
+  },
+  "image124.jpg": {
+    "temperament_score": 19,
+    "intimacy_score": 2
+  },
+  "image186.jpg": {
+    "temperament_score": 20,
+    "intimacy_score": 8
+  },
+  "image204.jpg": {
+    "temperament_score": 21,
+    "intimacy_score": 6
+  },
+  "image110.jpg": {
+    "temperament_score": 22,
+    "intimacy_score": 9
+  },
+  "image102.jpg": {
+    "temperament_score": 23,
+    "intimacy_score": 10
+  },
+  "image184.jpg": {
+    "temperament_score": 24,
+    "intimacy_score": 7
+  },
+  "image149.jpg": {
+    "temperament_score": 25,
+    "intimacy_score": 2
+  },
+  "image152.jpg": {
+    "temperament_score": 26,
+    "intimacy_score": 4
+  },
+  "image151.jpg": {
+    "temperament_score": 27,
+    "intimacy_score": 1
+  },
+  "image345.png": {
+    "temperament_score": 28,
+    "intimacy_score": 5
+  },
+  "image176.jpg": {
+    "temperament_score": 29,
+    "intimacy_score": 7
+  },
+  "image156.jpg": {
+    "temperament_score": 30,
+    "intimacy_score": 5
+  },
+  "image148.jpg": {
+    "temperament_score": 31,
+    "intimacy_score": 6
+  },
+  "image340.png": {
+    "temperament_score": 32,
+    "intimacy_score": 7
+  },
+  "image134.jpg": {
+    "temperament_score": 33,
+    "intimacy_score": 1
+  },
+  "image154.jpg": {
+    "temperament_score": 34,
+    "intimacy_score": 10
+  },
+  "image286.png": {
+    "temperament_score": 35,
+    "intimacy_score": 6
+  },
+  "image202.jpg": {
+    "temperament_score": 36,
+    "intimacy_score": 2
+  },
+  "image130.jpg": {
+    "temperament_score": 37,
+    "intimacy_score": 4
+  },
+  "image353.png": {
+    "temperament_score": 38,
+    "intimacy_score": 7
+  },
+  "image143.jpg": {
+    "temperament_score": 39,
+    "intimacy_score": 10
+  },
+  "image333.png": {
+    "temperament_score": 40,
+    "intimacy_score": 8
+  },
+  "image136.jpg": {
+    "temperament_score": 41,
+    "intimacy_score": 8
+  },
+  "image106.jpg": {
+    "temperament_score": 42,
+    "intimacy_score": 7
+  },
+  "image326.png": {
+    "temperament_score": 43,
+    "intimacy_score": 5
+  },
+  "image198.jpg": {
+    "temperament_score": 44,
+    "intimacy_score": 2
+  },
+  "image153.jpg": {
+    "temperament_score": 45,
+    "intimacy_score": 7
+  },
+  "image188.jpg": {
+    "temperament_score": 46,
+    "intimacy_score": 6
+  },
+  "image195.jpg": {
+    "temperament_score": 47,
+    "intimacy_score": 7
+  },
+  "image175.jpg": {
+    "temperament_score": 48,
+    "intimacy_score": 4
+  },
+  "image279.png": {
+    "temperament_score": 49,
+    "intimacy_score": 10
+  },
+  "image339.png": {
+    "temperament_score": 50,
+    "intimacy_score": 8
+  },
+  "image196.jpg": {
+    "temperament_score": 51,
+    "intimacy_score": 2
+  },
+  "image283.png": {
+    "temperament_score": 52,
+    "intimacy_score": 4
+  },
+  "image109.jpg": {
+    "temperament_score": 53,
+    "intimacy_score": 5
+  },
+  "image185.jpg": {
+    "temperament_score": 54,
+    "intimacy_score": 4
+  },
+  "image139.jpg": {
+    "temperament_score": 55,
+    "intimacy_score": 5
+  },
+  "image338.png": {
+    "temperament_score": 56,
+    "intimacy_score": 5
+  },
+  "image193.jpg": {
+    "temperament_score": 57,
+    "intimacy_score": 2
+  },
+  "image348.png": {
+    "temperament_score": 58,
+    "intimacy_score": 5
+  },
+  "image100.jpg": {
+    "temperament_score": 59,
+    "intimacy_score": 9
+  },
+  "image137.jpg": {
+    "temperament_score": 60,
+    "intimacy_score": 10
+  },
+  "image182.jpg": {
+    "temperament_score": 61,
+    "intimacy_score": 7
+  },
+  "image112.jpg": {
+    "temperament_score": 62,
+    "intimacy_score": 6
+  },
+  "image133.jpg": {
+    "temperament_score": 63,
+    "intimacy_score": 5
+  },
+  "image203.jpg": {
+    "temperament_score": 64,
+    "intimacy_score": 4
+  },
+  "image146.jpg": {
+    "temperament_score": 65,
+    "intimacy_score": 10
+  },
+  "image145.jpg": {
+    "temperament_score": 66,
+    "intimacy_score": 1
+  },
+  "image321.png": {
+    "temperament_score": 67,
+    "intimacy_score": 1
+  },
+  "image341.png": {
+    "temperament_score": 68,
+    "intimacy_score": 7
+  },
+  "image173.jpg": {
+    "temperament_score": 69,
+    "intimacy_score": 6
+  },
+  "image194.jpg": {
+    "temperament_score": 70,
+    "intimacy_score": 6
+  },
+  "image352.png": {
+    "temperament_score": 71,
+    "intimacy_score": 10
+  },
+  "image104.jpg": {
+    "temperament_score": 72,
+    "intimacy_score": 8
+  },
+  "image107.jpg": {
+    "temperament_score": 73,
+    "intimacy_score": 8
+  },
+  "image200.jpg": {
+    "temperament_score": 74,
+    "intimacy_score": 9
+  },
+  "image318.png": {
+    "temperament_score": 75,
+    "intimacy_score": 8
+  },
+  "image294.png": {
+    "temperament_score": 76,
+    "intimacy_score": 2
+  },
+  "image212.jpeg": {
+    "temperament_score": 77,
+    "intimacy_score": 1
+  },
+  "image346.png": {
+    "temperament_score": 78,
+    "intimacy_score": 5
+  },
+  "image312.png": {
+    "temperament_score": 79,
+    "intimacy_score": 8
+  },
+  "image307.png": {
+    "temperament_score": 80,
+    "intimacy_score": 2
+  },
+  "image205.jpg": {
+    "temperament_score": 81,
+    "intimacy_score": 1
+  },
+  "image131.jpg": {
+    "temperament_score": 82,
+    "intimacy_score": 9
+  },
+  "image141.jpg": {
+    "temperament_score": 83,
+    "intimacy_score": 7
+  },
+  "image113.jpg": {
+    "temperament_score": 84,
+    "intimacy_score": 6
+  },
+  "image301.png": {
+    "temperament_score": 85,
+    "intimacy_score": 6
+  },
+  "image160.jpg": {
+    "temperament_score": 86,
+    "intimacy_score": 2
+  },
+  "image287.png": {
+    "temperament_score": 87,
+    "intimacy_score": 8
+  },
+  "image355.png": {
+    "temperament_score": 88,
+    "intimacy_score": 4
+  },
+  "image108.jpg": {
+    "temperament_score": 89,
+    "intimacy_score": 6
+  },
+  "image282.png": {
+    "temperament_score": 90,
+    "intimacy_score": 8
+  },
+  "image284.png": {
+    "temperament_score": 91,
+    "intimacy_score": 7
+  },
+  "image118.jpg": {
+    "temperament_score": 92,
+    "intimacy_score": 7
+  },
+  "image357.png": {
+    "temperament_score": 93,
+    "intimacy_score": 10
+  },
+  "image327.png": {
+    "temperament_score": 94,
+    "intimacy_score": 6
+  },
+  "image206.jpeg": {
+    "temperament_score": 95,
+    "intimacy_score": 1
+  },
+  "image116.jpg": {
+    "temperament_score": 96,
+    "intimacy_score": 5
+  },
+  "image170.jpg": {
+    "temperament_score": 97,
+    "intimacy_score": 5
+  },
+  "image359.png": {
+    "temperament_score": 98,
+    "intimacy_score": 4
+  },
+  "image328.png": {
+    "temperament_score": 99,
+    "intimacy_score": 7
+  },
+  "image332.png": {
+    "temperament_score": 100,
+    "intimacy_score": 2
+  },
+  "image309.png": {
+    "temperament_score": 101,
+    "intimacy_score": 4
+  },
+  "image144.jpg": {
+    "temperament_score": 102,
+    "intimacy_score": 2
+  },
+  "image320.png": {
+    "temperament_score": 103,
+    "intimacy_score": 9
+  },
+  "image323.png": {
+    "temperament_score": 104,
+    "intimacy_score": 6
+  },
+  "image300.png": {
+    "temperament_score": 105,
+    "intimacy_score": 1
+  },
+  "image360.png": {
+    "temperament_score": 106,
+    "intimacy_score": 9
+  },
+  "image138.jpg": {
+    "temperament_score": 107,
+    "intimacy_score": 10
+  },
+  "image297.png": {
+    "temperament_score": 108,
+    "intimacy_score": 9
+  },
+  "image343.png": {
+    "temperament_score": 109,
+    "intimacy_score": 4
+  },
+  "image349.png": {
+    "temperament_score": 110,
+    "intimacy_score": 10
+  },
+  "image207.jpeg": {
+    "temperament_score": 111,
+    "intimacy_score": 6
+  },
+  "image310.png": {
+    "temperament_score": 112,
+    "intimacy_score": 3
+  },
+  "image356.png": {
+    "temperament_score": 113,
+    "intimacy_score": 4
+  },
+  "image302.png": {
+    "temperament_score": 114,
+    "intimacy_score": 3
+  },
+  "image201.jpg": {
+    "temperament_score": 115,
+    "intimacy_score": 1
+  },
+  "image347.png": {
+    "temperament_score": 116,
+    "intimacy_score": 9
+  },
+  "image303.png": {
+    "temperament_score": 117,
+    "intimacy_score": 4
+  },
+  "image127.jpg": {
+    "temperament_score": 118,
+    "intimacy_score": 3
+  },
+  "image306.png": {
+    "temperament_score": 119,
+    "intimacy_score": 6
+  },
+  "image331.png": {
+    "temperament_score": 120,
+    "intimacy_score": 4
+  },
+  "image208.jpeg": {
+    "temperament_score": 121,
+    "intimacy_score": 10
+  },
+  "image150.jpg": {
+    "temperament_score": 122,
+    "intimacy_score": 2
+  },
+  "image171.jpg": {
+    "temperament_score": 123,
+    "intimacy_score": 2
+  },
+  "image168.jpg": {
+    "temperament_score": 124,
+    "intimacy_score": 10
+  },
+  "image334.png": {
+    "temperament_score": 125,
+    "intimacy_score": 1
+  },
+  "image123.jpg": {
+    "temperament_score": 126,
+    "intimacy_score": 3
+  },
+  "image197.jpg": {
+    "temperament_score": 127,
+    "intimacy_score": 5
+  },
+  "image155.jpg": {
+    "temperament_score": 128,
+    "intimacy_score": 2
+  },
+  "image111.jpg": {
+    "temperament_score": 129,
+    "intimacy_score": 9
+  },
+  "image183.jpg": {
+    "temperament_score": 130,
+    "intimacy_score": 9
+  },
+  "image337.png": {
+    "temperament_score": 131,
+    "intimacy_score": 9
+  },
+  "image305.png": {
+    "temperament_score": 132,
+    "intimacy_score": 3
+  },
+  "image105.jpg": {
+    "temperament_score": 133,
+    "intimacy_score": 5
+  },
+  "image316.png": {
+    "temperament_score": 134,
+    "intimacy_score": 4
+  },
+  "image177.jpg": {
+    "temperament_score": 135,
+    "intimacy_score": 6
+  },
+  "image325.png": {
+    "temperament_score": 136,
+    "intimacy_score": 5
+  },
+  "image342.png": {
+    "temperament_score": 137,
+    "intimacy_score": 10
+  },
+  "image119.jpg": {
+    "temperament_score": 138,
+    "intimacy_score": 4
+  },
+  "image298.png": {
+    "temperament_score": 139,
+    "intimacy_score": 4
+  },
+  "image313.png": {
+    "temperament_score": 140,
+    "intimacy_score": 7
+  },
+  "image174.jpg": {
+    "temperament_score": 141,
+    "intimacy_score": 2
+  },
+  "image278.png": {
+    "temperament_score": 142,
+    "intimacy_score": 3
+  },
+  "image199.jpg": {
+    "temperament_score": 143,
+    "intimacy_score": 4
+  },
+  "image158.jpg": {
+    "temperament_score": 144,
+    "intimacy_score": 9
+  },
+  "image361.png": {
+    "temperament_score": 145,
+    "intimacy_score": 10
+  },
+  "image351.png": {
+    "temperament_score": 146,
+    "intimacy_score": 8
+  },
+  "image117.jpg": {
+    "temperament_score": 147,
+    "intimacy_score": 2
+  },
+  "image142.jpg": {
+    "temperament_score": 148,
+    "intimacy_score": 5
+  },
+  "image172.jpg": {
+    "temperament_score": 149,
+    "intimacy_score": 6
+  },
+  "image319.png": {
+    "temperament_score": 150,
+    "intimacy_score": 4
+  },
+  "image169.jpg": {
+    "temperament_score": 151,
+    "intimacy_score": 6
+  },
+  "image324.png": {
+    "temperament_score": 152,
+    "intimacy_score": 2
+  },
+  "image10.jpg": {
+    "temperament_score": 153,
+    "intimacy_score": 10
+  },
+  "image335.png": {
+    "temperament_score": 154,
+    "intimacy_score": 10
+  },
+  "image187.jpg": {
+    "temperament_score": 155,
+    "intimacy_score": 7
+  },
+  "image209.jpeg": {
+    "temperament_score": 156,
+    "intimacy_score": 3
+  },
+  "image189.jpg": {
+    "temperament_score": 157,
+    "intimacy_score": 6
+  },
+  "image211.jpeg": {
+    "temperament_score": 158,
+    "intimacy_score": 6
+  },
+  "image166.jpg": {
+    "temperament_score": 159,
+    "intimacy_score": 7
+  },
+  "image295.png": {
+    "temperament_score": 160,
+    "intimacy_score": 9
+  },
+  "image296.png": {
+    "temperament_score": 161,
+    "intimacy_score": 6
+  },
+  "image308.png": {
+    "temperament_score": 162,
+    "intimacy_score": 2
+  },
+  "image311.png": {
+    "temperament_score": 163,
+    "intimacy_score": 1
+  },
+  "image181.jpg": {
+    "temperament_score": 164,
+    "intimacy_score": 5
+  },
+  "image147.jpg": {
+    "temperament_score": 165,
+    "intimacy_score": 9
+  },
+  "image280.png": {
+    "temperament_score": 166,
+    "intimacy_score": 4
+  },
+  "image178.jpg": {
+    "temperament_score": 167,
+    "intimacy_score": 4
+  },
+  "image129.jpg": {
+    "temperament_score": 168,
+    "intimacy_score": 5
+  },
+  "image315.png": {
+    "temperament_score": 169,
+    "intimacy_score": 7
+  },
+  "image164.jpg": {
+    "temperament_score": 170,
+    "intimacy_score": 8
+  },
+  "image292.png": {
+    "temperament_score": 171,
+    "intimacy_score": 1
+  },
+  "image291.png": {
+    "temperament_score": 172,
+    "intimacy_score": 7
+  },
+  "image293.png": {
+    "temperament_score": 173,
+    "intimacy_score": 6
+  },
+  "image299.png": {
+    "temperament_score": 174,
+    "intimacy_score": 10
+  },
+  "image132.jpg": {
+    "temperament_score": 175,
+    "intimacy_score": 1
+  },
+  "image165.jpg": {
+    "temperament_score": 176,
+    "intimacy_score": 4
+  },
+  "image120.jpg": {
+    "temperament_score": 177,
+    "intimacy_score": 2
+  },
+  "image317.png": {
+    "temperament_score": 178,
+    "intimacy_score": 1
+  },
+  "image190.jpg": {
+    "temperament_score": 179,
+    "intimacy_score": 7
+  },
+  "image314.png": {
+    "temperament_score": 180,
+    "intimacy_score": 1
+  },
+  "image322.png": {
+    "temperament_score": 181,
+    "intimacy_score": 1
+  },
+  "image140.jpg": {
+    "temperament_score": 182,
+    "intimacy_score": 5
+  },
+  "image179.jpg": {
+    "temperament_score": 183,
+    "intimacy_score": 8
+  },
+  "image103.jpg": {
+    "temperament_score": 184,
+    "intimacy_score": 10
+  },
+  "image191.jpg": {
+    "temperament_score": 185,
+    "intimacy_score": 8
+  },
+  "image126.jpg": {
+    "temperament_score": 186,
+    "intimacy_score": 10
+  },
+  "image354.png": {
+    "temperament_score": 187,
+    "intimacy_score": 9
+  },
+  "image163.jpg": {
+    "temperament_score": 188,
+    "intimacy_score": 9
+  },
+  "image121.jpg": {
+    "temperament_score": 189,
+    "intimacy_score": 9
+  },
+  "image180.jpg": {
+    "temperament_score": 190,
+    "intimacy_score": 8
+  },
+  "image210.jpeg": {
+    "temperament_score": 191,
+    "intimacy_score": 8
+  },
+  "image115.jpg": {
+    "temperament_score": 192,
+    "intimacy_score": 1
+  },
+  "image289.png": {
+    "temperament_score": 193,
+    "intimacy_score": 3
+  },
+  "image290.png": {
+    "temperament_score": 194,
+    "intimacy_score": 8
+  },
+  "image157.jpg": {
+    "temperament_score": 195,
+    "intimacy_score": 6
+  },
+  "image304.png": {
+    "temperament_score": 196,
+    "intimacy_score": 4
+  },
+  "image161.jpg": {
+    "temperament_score": 197,
+    "intimacy_score": 9
+  },
+  "image167.jpg": {
+    "temperament_score": 198,
+    "intimacy_score": 10
+  },
+  "image329.png": {
+    "temperament_score": 199,
+    "intimacy_score": 1
+  }
+}
