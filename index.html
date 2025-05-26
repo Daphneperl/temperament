@@ -1,24 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title></title>
+  <meta charset="UTF-8" />
+  <title>3D Parallax Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <style>
-    * {
+    html, body {
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-    }
-
-    html, body {
+      overflow: hidden;
       width: 100%;
       height: 100%;
-      overflow: hidden;
       background: url("bckg.png") center/cover no-repeat fixed;
       backdrop-filter: blur(2px);
+      position: fixed;
+      touch-action: none;
     }
 
     canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       display: block;
       cursor: grab;
     }
@@ -26,7 +30,18 @@
     canvas:active {
       cursor: grabbing;
     }
+
+    @font-face {
+      font-family: 'PixelFont';
+      src: url('pixel.ttf') format('truetype');
+    }
   </style>
+  <script>
+    document.addEventListener("gesturestart", e => e.preventDefault(), { passive: false });
+    document.addEventListener("gesturechange", e => e.preventDefault(), { passive: false });
+    document.addEventListener("gestureend", e => e.preventDefault(), { passive: false });
+    window.addEventListener("wheel", e => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+  </script>
 </head>
 <body>
 <canvas id="canvas"></canvas>
@@ -38,61 +53,101 @@ const ctx = canvas.getContext("2d");
 let width = canvas.width = window.innerWidth;
 let height = canvas.height = window.innerHeight;
 
-let scale = 0.3; // More zoomed out
+let scale = 0.15;
+let targetScale = 0.3;
 let camera = { x: 0, y: 0 };
 let targetCamera = { x: 0, y: 0 };
 let isDragging = false;
 let dragStart = { x: 0, y: 0 };
 let hoveredItem = null;
+let autoZooming = true;
 
-const IMAGE_SIZE = 60;
-const MIN_RADIUS = 300;
-const MAX_RADIUS = 1500;
+const BASE_SIZE = 200;
 const PARALLAX_INTENSITY = 0.3;
+const LAYERS = 6;
+
+setTimeout(() => autoZooming = false, 3000);
 
 async function loadData() {
   const res = await fetch("temperament_scores.json");
   const data = await res.json();
-  return Object.entries(data).map(([filename, { temperament_score, intimacy_score }]) => ({
+  return Object.entries(data).map(([filename, { temperament_score }]) => ({
     filename,
-    temperament_score,
-    intimacy_score
+    temperament_score
   }));
 }
-
-function polarToCartesian(r, angle) {
-  return {
-    x: r * Math.cos(angle),
-    y: r * Math.sin(angle)
-  };
-}
-
 function placeIn3DSpace(data) {
-  const sorted = [...data];
-  const maxScore = Math.max(...sorted.map(i => i.temperament_score));
-  const minScore = Math.min(...sorted.map(i => i.temperament_score));
+  const items = [];
+  const minRadius = 300;
+  const maxRadius = 2000;
 
-  return sorted.map((item) => {
-    const norm = (item.temperament_score - minScore) / (maxScore - minScore);
-    const jitter = Math.random() * 50 - 25;
-    const radius = MIN_RADIUS + (1 - norm) * (MAX_RADIUS - MIN_RADIUS) + jitter;
+  for (let i = 0; i < data.length; i++) {
+    const item = data[i];
     const angle = Math.random() * 2 * Math.PI;
-    const { x, y } = polarToCartesian(radius, angle);
-    const z = item.intimacy_score;
+
+    const normalizedScore = Math.min(Math.max(item.temperament_score / 100, 0), 1);
+    const radius = minRadius + (1 - normalizedScore) * (maxRadius - minRadius);
+
+    let x = Math.cos(angle) * radius;
+    let y = Math.sin(angle) * radius;
+    const z = Math.floor(Math.random() * LAYERS) + 1;
+
     const img = new Image();
     img.src = `images/${item.filename}`;
     img.onerror = () => console.error("Failed to load image:", img.src);
-    return {
+
+    const dir = Math.random() < 0.5 ? -1 : 1;
+    const startX = (Math.random() * width * 2 - width) * dir * 2;
+    const startY = (Math.random() * height * 2 - height) * dir * 2;
+
+    items.push({
       ...item,
       img,
       baseX: x,
       baseY: y,
       z,
       isFocused: false,
-      animatedSize: IMAGE_SIZE
+      animatedSize: BASE_SIZE,
+      currentX: startX,
+      currentY: startY,
+      naturalRatio: 1,
+      jitterOffset: { x: 0, y: 0 },
+      jitterAngle: Math.random() * Math.PI * 2
+    });
+
+    img.onload = () => {
+      item.naturalRatio = img.width / img.height || 1;
     };
-  });
+  }
+
+  return items;
 }
+
+function applyJitter(item) {
+  const score = item.temperament_score;
+  const norm = Math.min(Math.max(score / 100, 0), 1);
+
+  // Speed controls how fast the jitter evolves
+  const speed = 0.002 + norm * 0.015;       // slow for low score, faster for high
+
+  item.jitterAngle += speed;
+
+  // Use layered sine waves for smooth organic movement
+  const baseFreq = 2 + norm * 4;
+  const secondaryFreq = 0.5 + norm * 1.5;
+
+  const radius = 2; // fixed radius for all, difference is only in speed
+
+  item.jitterOffset.x =
+    Math.sin(item.jitterAngle * baseFreq) * radius * 0.6 +
+    Math.sin(item.jitterAngle * secondaryFreq) * radius * 0.4;
+
+  item.jitterOffset.y =
+    Math.cos(item.jitterAngle * baseFreq * 0.9) * radius * 0.6 +
+    Math.cos(item.jitterAngle * secondaryFreq * 1.1) * radius * 0.4;
+}
+
+
 
 function draw() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -105,73 +160,107 @@ function draw() {
   camera.y += (targetCamera.y - camera.y) * 0.1;
 
   backgroundImages.sort((a, b) => a.z - b.z).forEach(item => {
-    const parallax = 1 - (item.z / 10) * PARALLAX_INTENSITY;
-    const px = width / 2 + (item.baseX - camera.x) * parallax * scale;
-    const py = height / 2 + (item.baseY - camera.y) * parallax * scale;
-    const zoomFactor = 1 + (scale - 1) * (1 - item.z / 10);
-    const finalSize = IMAGE_SIZE * zoomFactor;
+    item.currentX += (item.baseX - item.currentX) * 0.02;
+    item.currentY += (item.baseY - item.currentY) * 0.02;
 
-    ctx.drawImage(item.img, px - finalSize / 2, py - finalSize / 2, finalSize, finalSize);
+    applyJitter(item); // ← Jitter based on temperament score
 
+    const parallax = 1 - (item.z / LAYERS) * PARALLAX_INTENSITY;
+    const px = width / 2 + (item.currentX + item.jitterOffset.x - camera.x) * parallax * scale;
+    const py = height / 2 + (item.currentY + item.jitterOffset.y - camera.y) * parallax * scale;
+    const size = BASE_SIZE * scale * (1 + 0.1 * (LAYERS - item.z));
+
+    drawFramedImage(item.img, px, py, size, item.naturalRatio);
     item.screenX = px;
     item.screenY = py;
-    item.size = finalSize;
+    item.size = size;
   });
 
   if (focused) {
     ctx.fillStyle = "rgba(0,0,0,0.4)";
     ctx.fillRect(0, 0, width, height);
-
     const snapshot = ctx.getImageData(0, 0, width, height);
     ctx.filter = "blur(6px)";
     ctx.putImageData(snapshot, 0, 0);
     ctx.filter = "none";
-  }
 
-  if (focused) {
-    const parallax = 1 - (focused.z / 10) * PARALLAX_INTENSITY;
-    const px = width / 2 + (focused.baseX - camera.x) * parallax * scale;
-    const py = height / 2 + (focused.baseY - camera.y) * parallax * scale;
-    const zoomFactor = 1 + (scale - 1) * (1 - focused.z / 10);
+    const px = width / 2 + (focused.baseX - camera.x) * scale;
+    const py = height / 2 + (focused.baseY - camera.y) * scale;
+    const targetSize = height * 0.75;
+    focused.animatedSize += (targetSize - focused.animatedSize) * 0.1;
 
-    focused.animatedSize += ((IMAGE_SIZE * 10 * zoomFactor) - focused.animatedSize) * 0.2;
-
-    ctx.drawImage(focused.img, px - focused.animatedSize / 2, py - focused.animatedSize / 2, focused.animatedSize, focused.animatedSize);
-
+    drawFramedImage(focused.img, px, py, focused.animatedSize, focused.naturalRatio);
     focused.screenX = px;
     focused.screenY = py;
     focused.size = focused.animatedSize;
   }
 
   if (hoveredItem && !hoveredItem.isFocused) {
-    const lines = [
-      `Temperament: ${hoveredItem.temperament_score}`,
-      `Intimacy: ${hoveredItem.intimacy_score}`
-    ];
-    ctx.font = "14px sans-serif";
-    ctx.fillStyle = "rgba(0,0,0,0.8)";
-    const padding = 6;
-    const lineHeight = 18;
-    const maxWidth = Math.max(...lines.map(t => ctx.measureText(t).width));
-    ctx.fillRect(
-      hoveredItem.screenX + 10,
-      hoveredItem.screenY - 40,
-      maxWidth + padding * 2,
-      lineHeight * lines.length + padding
-    );
+    const labelText = `Score: ${hoveredItem.temperament_score}`;
+    ctx.font = "20px PixelFont";
+    ctx.textBaseline = "top";
+    ctx.textAlign = "left";
 
-    ctx.fillStyle = "white";
-    lines.forEach((line, i) => {
-      ctx.fillText(
-        line,
-        hoveredItem.screenX + 10 + padding,
-        hoveredItem.screenY - 40 + padding + (i + 1) * lineHeight - 4
-      );
-    });
+    const padding = 6;
+    const w = hoveredItem.size * (hoveredItem.naturalRatio >= 1 ? 1 : hoveredItem.naturalRatio);
+    const labelWidth = ctx.measureText(labelText).width + padding * 2;
+    const labelHeight = 24;
+
+    const labelX = hoveredItem.screenX - w / 2;
+    const labelY = hoveredItem.screenY + hoveredItem.size / 2 + 10;
+
+    ctx.fillStyle = "#d3d3d3";
+    ctx.fillRect(labelX, labelY, labelWidth, labelHeight);
+
+    ctx.fillStyle = "#000";
+    ctx.fillText(labelText, labelX + padding, labelY + 2);
   }
 }
 
+
+function drawFramedImage(img, px, py, size, aspect) {
+  const ratio = aspect || 1;
+  let w = size * (ratio >= 1 ? 1 : ratio);
+  let h = size * (ratio >= 1 ? 1 / ratio : 1);
+
+  const padding = Math.max(Math.min(w, h) * 0.04, 2);
+  const titleBarHeight = Math.max(Math.min(w, h) * 0.08, 10);
+  const frameW = w + padding * 2;
+  const frameH = h + padding * 2 + titleBarHeight;
+
+  ctx.fillStyle = "#d3d3d3";
+  ctx.fillRect(px - frameW / 2, py - frameH / 2, frameW, frameH);
+
+  ctx.strokeStyle = "#000";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(px - frameW / 2, py - frameH / 2, frameW, frameH);
+
+  ctx.fillStyle = "#b0b0b0";
+  ctx.fillRect(px - frameW / 2, py - frameH / 2, frameW, titleBarHeight);
+
+  const buttonX = px - frameW / 2 + 6;
+  const buttonY = py - frameH / 2 + titleBarHeight / 2 - 3;
+  ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.moveTo(buttonX, buttonY);
+  ctx.lineTo(buttonX + 8, buttonY);
+  ctx.lineTo(buttonX + 4, buttonY + 6);
+  ctx.closePath();
+  ctx.fill();
+
+  const imgX = px - w / 2;
+  const imgY = py - frameH / 2 + titleBarHeight + padding;
+  ctx.drawImage(img, imgX, imgY, w, h);
+
+  ctx.strokeStyle = "#000";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(imgX, imgY, w, h);
+}
+
 function animate() {
+  if (autoZooming) {
+    scale += (targetScale - scale) * 0.03;
+  }
   draw();
   requestAnimationFrame(animate);
 }
@@ -179,6 +268,7 @@ function animate() {
 canvas.addEventListener("wheel", (e) => {
   const zoom = e.deltaY < 0 ? 1.1 : 0.9;
   scale *= zoom;
+  targetScale = scale;
   draw();
 });
 
@@ -187,6 +277,7 @@ canvas.addEventListener("mousedown", (e) => {
   dragStart.x = e.clientX;
   dragStart.y = e.clientY;
 });
+
 canvas.addEventListener("mousemove", (e) => {
   if (isDragging) {
     targetCamera.x -= (e.clientX - dragStart.x) / scale;
@@ -202,7 +293,9 @@ canvas.addEventListener("mousemove", (e) => {
     for (let item of images) {
       const dx = mx - item.screenX;
       const dy = my - item.screenY;
-      if (Math.abs(dx) < item.size / 2 && Math.abs(dy) < item.size / 2) {
+      const w = item.size * (item.naturalRatio >= 1 ? 1 : item.naturalRatio);
+      const h = item.size * (item.naturalRatio >= 1 ? 1 / item.naturalRatio : 1);
+      if (Math.abs(dx) < w / 2 && Math.abs(dy) < h / 2) {
         hoveredItem = item;
         break;
       }
@@ -210,10 +303,10 @@ canvas.addEventListener("mousemove", (e) => {
     draw();
   }
 });
+
 canvas.addEventListener("mouseup", () => isDragging = false);
 canvas.addEventListener("mouseleave", () => isDragging = false);
 
-// 🔁 Only double-click triggers focus mode
 canvas.addEventListener("dblclick", (e) => {
   const mx = e.clientX;
   const my = e.clientY;
@@ -222,24 +315,36 @@ canvas.addEventListener("dblclick", (e) => {
   for (let item of images) {
     const dx = mx - item.screenX;
     const dy = my - item.screenY;
-    if (Math.abs(dx) < item.size / 2 && Math.abs(dy) < item.size / 2) {
+    const w = item.size * (item.naturalRatio >= 1 ? 1 : item.naturalRatio);
+    const h = item.size * (item.naturalRatio >= 1 ? 1 / item.naturalRatio : 1);
+    if (Math.abs(dx) < w / 2 && Math.abs(dy) < h / 2) {
       clicked = item;
       break;
     }
   }
 
-  if (clicked && clicked.isFocused) {
-    clicked.isFocused = false;
-  } else {
-    images.forEach(i => i.isFocused = false);
-    if (clicked) {
-      clicked.isFocused = true;
-      targetCamera.x = clicked.baseX;
-      targetCamera.y = clicked.baseY;
-    }
+  images.forEach(i => i.isFocused = false);
+  if (clicked) {
+    clicked.isFocused = true;
+    targetCamera.x = clicked.baseX;
+    targetCamera.y = clicked.baseY;
   }
-
   draw();
+});
+
+canvas.addEventListener("click", (e) => {
+  const focused = images.find(i => i.isFocused);
+  if (!focused) return;
+
+  const dx = e.clientX - focused.screenX;
+  const dy = e.clientY - focused.screenY;
+  const w = focused.size * (focused.naturalRatio >= 1 ? 1 : focused.naturalRatio);
+  const h = focused.size * (focused.naturalRatio >= 1 ? 1 / focused.naturalRatio : 1);
+
+  if (Math.abs(dx) > w / 2 || Math.abs(dy) > h / 2) {
+    focused.isFocused = false;
+    draw();
+  }
 });
 
 document.addEventListener("keydown", (e) => {
