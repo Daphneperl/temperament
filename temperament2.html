@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Temperament Scores Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        @font-face {
+            font-family: 'Pixel';
+            src: url('fonts/pixel.tff') format('truetype');
+        }
+        body {
+            margin: 0;
+            background-color: black;
+            overflow: hidden;
+        }
+        #visualization {
+            width: 100vw;
+            height: 100vh;
+            display: none;
+        }
+        .loading-bar {
+            width: 300px;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .loading-progress {
+            height: 100%;
+            background: #ffffff;
+            transition: width 0.3s ease;
+        }
+        #info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 100;
+        }
+        #score-overlay {
+            position: absolute;
+            color: white;
+            font-family: 'Pixel', monospace;
+            padding: 5px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 3px;
+            pointer-events: none; /* Allows mouse events to pass through */
+            display: none; /* Hide by default */
+            z-index: 100; /* Ensure it's above the canvas */
+            transform: translate(-50%, -100%); /* Position above the cursor */
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-container" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+        <div class="loading-bar">
+            <div id="loading-progress" class="loading-progress" style="width: 0%"></div>
+        </div>
+        <div id="loading-text" style="color: #ffffff; font-family: monospace; margin-top: 10px;">LOADING... 0%</div>
+    </div>
+    <div id="info">
+        Controls:<br>
+        - Left click + drag: Rotate<br>
+        - Right click + drag: Pan<br>
+        - Scroll: Zoom<br>
+        - Middle click + drag: Rotate around Z-axis
+    </div>
+    <div id="visualization"></div>
+    <div id="score-overlay"></div>
+    <script>
+        let scene, camera, renderer, controls;
+        let imageSprites = [];
+        let raycaster, mouse;
+        let selectedSprite = null;
+
+        function init() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000000);
+
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 100;
+
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('visualization').appendChild(renderer.domElement);
+
+            // Add orbit controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Initialize raycaster for mouse interaction
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            // Add ambient light
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize, false);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function createImageSprite(imageUrl, position, scores) {
+            return new Promise((resolve, reject) => {
+                const textureLoader = new THREE.TextureLoader();
+                textureLoader.load(
+                    imageUrl,
+                    (texture) => {
+                        const material = new THREE.SpriteMaterial({ map: texture });
+                        const sprite = new THREE.Sprite(material);
+                        sprite.position.set(position.x, position.y, position.z);
+                        
+                        // Calculate aspect ratio and maintain original proportions
+                        const aspectRatio = texture.image.width / texture.image.height;
+                        const baseSize = 5; // Base size for the larger dimension
+                        const width = aspectRatio > 1 ? baseSize : baseSize * aspectRatio;
+                        const height = aspectRatio > 1 ? baseSize / aspectRatio : baseSize;
+                        
+                        sprite.scale.set(width, height, 1);
+                        sprite.userData = { 
+                            originalScale: { width, height },
+                            aspectRatio: aspectRatio,
+                            scores: scores
+                        };
+                        scene.add(sprite);
+                        imageSprites.push(sprite);
+                        resolve();
+                    },
+                    undefined,
+                    reject
+                );
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function updateLoadingUI(progress) {
+            const progressBar = document.getElementById('loading-progress');
+            const loadingText = document.getElementById('loading-text');
+            
+            if (progressBar && loadingText) {
+                progressBar.style.width = `${progress}%`;
+                loadingText.textContent = `LOADING... ${Math.floor(progress)}%`;
+            }
+        }
+
+        // Function to preload images
+        function preloadImages(data) {
+            const totalImages = Object.keys(data).length;
+            let loadedImages = 0;
+
+            const promises = Object.keys(data).map(filename => {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        loadedImages++;
+                        const progress = (loadedImages / totalImages) * 50; // First 50% for preloading
+                        updateLoadingUI(progress);
+                        resolve();
+                    };
+                    img.onerror = () => reject();
+                    img.src = `images/${filename}`;
+                });
+            });
+            return Promise.all(promises);
+        }
+
+        // Load the JSON data and create 3D visualization
+        fetch('temperament_scores.json')
+            .then(response => response.json())
+            .then(data => {
+                const totalImages = Object.keys(data).length;
+                let createdSprites = 0;
+
+                const updateLoadingProgress = () => {
+                    createdSprites++;
+                    const progress = 50 + (createdSprites / totalImages) * 50; // Second 50% for sprite creation
+                    updateLoadingUI(progress);
+                };
+
+                return preloadImages(data).then(() => {
+                    init();
+
+                    const dataArray = Object.entries(data).map(([filename, scores]) => ({
+                        filename,
+                        ...scores
+                    }));
+
+                    const maxScore = d3.max(dataArray, d => d.temperament_score);
+                    const minScore = d3.min(dataArray, d => d.temperament_score);
+                    const maxIntimacy = d3.max(dataArray, d => d.intimacy_score);
+                    const minIntimacy = d3.min(dataArray, d => d.intimacy_score);
+
+                    // Create image sprites in 3D space
+                    const createSpritesPromises = dataArray.map(d => {
+                        const normalizedScore = (d.temperament_score - minScore) / (maxScore - minScore);
+                        // Removed normalizedIntimacy
+                        
+                        // Spherical coordinates mapping based only on temperament for radius
+                        const radius = 50 * (1 - normalizedScore); // Map temperament to radius
+                        const theta = Math.random() * Math.PI; // Random inclination (0 to PI)
+                        const phi = Math.random() * 2 * Math.PI; // Random azimuthal angle (0 to 2*PI)
+
+                        // Convert spherical to Cartesian coordinates
+                        const x = radius * Math.sin(theta) * Math.cos(phi);
+                        const y = radius * Math.sin(theta) * Math.sin(phi);
+                        const z = radius * Math.cos(theta);
+
+                        return createImageSprite(`images/${d.filename}`, { x, y, z }, { temperament_score: d.temperament_score, intimacy_score: d.intimacy_score }) // Still passing intimacy for now, will remove in next step if needed elsewhere
+                            .then(() => updateLoadingProgress());
+                    });
+
+                    return Promise.all(createSpritesPromises);
+                }).then(() => {
+                    document.getElementById('loading-container').style.display = 'none';
+                    document.getElementById('visualization').style.display = 'block';
+                    animate();
+
+                    const scoreOverlay = document.getElementById('score-overlay');
+
+                    // Add mousemove listener for hover effects
+                    renderer.domElement.addEventListener('mousemove', (event) => {
+                        // Calculate mouse position in normalized device coordinates (-1 to +1)
+                        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+                        // Update the raycaster with the camera and mouse position
+                        raycaster.setFromCamera(mouse, camera);
+
+                        // Find intersections with the image sprites
+                        const intersects = raycaster.intersectObjects(imageSprites);
+
+                        if (intersects.length > 0) {
+                            // An image sprite is hovered
+                            const intersectedSprite = intersects[0].object;
+                            const scores = intersectedSprite.userData.scores;
+                            
+                            // Display the scores
+                            scoreOverlay.textContent = `Temperament: ${scores.temperament_score.toFixed(2)}`;
+
+                            // Convert 3D position to 2D screen position
+                            const tempV = new THREE.Vector3().copy(intersectedSprite.position);
+                            tempV.project(camera);
+
+                            const x = (tempV.x * .5 + .5) * window.innerWidth;
+                            const y = (tempV.y * -.5 + .5) * window.innerHeight;
+
+                            // Position the overlay
+                            scoreOverlay.style.left = `${x}px`;
+                            scoreOverlay.style.top = `${y}px`;
+                            scoreOverlay.style.display = 'block';
+                        } else {
+                            // No image sprite is hovered, hide the overlay
+                            scoreOverlay.style.display = 'none';
+                        }
+                    }, false);
+
+                });
+            })
+            .catch(error => {
+                console.error('Error loading images:', error);
+                document.getElementById('loading-text').textContent = 'Error loading images. Please refresh the page.';
+                document.getElementById('loading-text').style.color = '#ff0000';
+            });
+    </script>
+</body>
+</html>

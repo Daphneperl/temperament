@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Image Completeness Scores</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: black;
+    }
+    canvas {
+      display: block;
+    }
+    .loading-bar {
+      width: 300px;
+      height: 20px;
+      background: #333;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .loading-progress {
+      height: 100%;
+      background: #ffffff;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading-container" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+    <div class="loading-bar">
+      <div id="loading-progress" class="loading-progress" style="width: 0%"></div>
+    </div>
+    <div id="loading-text" style="color: #ffffff; font-family: monospace; margin-top: 10px;">LOADING... 0%</div>
+  </div>
+
+  <script>
+    let particles = [];
+    let scores = {};
+    let imagesLoaded = 0;
+    let totalImages = 0;
+    let loadingComplete = false;
+    let loadingError = false;
+    let loadingProgress = 0;
+    let sortedScores = []; // To store scores sorted by value
+
+    async function loadScores() {
+      try {
+        const response = await fetch('inverted_sketchiness_scores.json');
+        scores = await response.json();
+        return true;
+      } catch (error) {
+        console.error('Error loading scores:', error);
+        handleError(error);
+        return false;
+      }
+    }
+
+    function handleError(error) {
+      console.error('Loading error:', error);
+      loadingError = true;
+      document.getElementById('loading-text').textContent = 'Error loading resources. Check console for details.';
+      document.getElementById('loading-text').style.color = '#ff0000';
+    }
+
+    function updateLoadingUI() {
+      const progressBar = document.getElementById('loading-progress');
+      const loadingText = document.getElementById('loading-text');
+      
+      if (progressBar && loadingText) {
+        progressBar.style.width = `${loadingProgress}%`;
+        loadingText.textContent = `LOADING... ${Math.floor(loadingProgress)}%`;
+      }
+    }
+
+    function setup() {
+      createCanvas(windowWidth, windowHeight);
+      
+      loadScores().then(() => {
+        totalImages = Object.keys(scores).length;
+        console.log('Total images to load:', totalImages);
+        
+        if (totalImages === 0) {
+          loadingComplete = true;
+          document.getElementById('loading-container').style.display = 'none';
+          return;
+        }
+
+        // Sort scores to determine rank-based categories
+        sortedScores = Object.entries(scores).sort((a, b) => a[1] - b[1]); // Sort by score ascending
+
+        // Reset loading state
+        imagesLoaded = 0;
+        loadingProgress = 0;
+        updateLoadingUI();
+
+        // Create particles for each image
+        for (const [filename, score] of Object.entries(scores)) {
+          const img = loadImage('images/' + filename, 
+            () => {
+              imagesLoaded++;
+              loadingProgress = (imagesLoaded / totalImages) * 100;
+              updateLoadingUI();
+              if (imagesLoaded === totalImages) {
+                loadingComplete = true;
+                document.getElementById('loading-container').style.display = 'none';
+              }
+            },
+            (err) => {
+              console.error('Error loading image:', filename, err);
+              handleError(err);
+            }
+          );
+          particles.push(new ImageParticle(filename, score, img, sortedScores));
+        }
+      });
+    }
+
+    function draw() {
+      if (!loadingComplete) {
+        return;
+      }
+
+      // Check if all particles are in their final positions
+      let allInPosition = true;
+      for (let p of particles) {
+        if (p.type === 'high_rank' && !p.bounced) {
+          allInPosition = false;
+          break;
+        }
+        if (p.type === 'mid_rank' && p.transitionFrame < 480) {
+          allInPosition = false;
+          break;
+        }
+      }
+
+      // Use solid background if all particles are in position, otherwise use semi-transparent
+      background(0, allInPosition ? 255 : 20);
+      
+      // Sort particles by hover state to ensure hovered ones appear on top
+      particles.sort((a, b) => {
+        if (a.isHovered && !b.isHovered) return 1;
+        if (!a.isHovered && b.isHovered) return -1;
+        return 0;
+      });
+      
+      for (let p of particles) {
+        p.update();
+        p.display();
+      }
+    }
+
+    class ImageParticle {
+      constructor(filename, score, img, sortedScores) {
+        this.filename = filename;
+        this.score = score;
+        this.img = img;
+        this.sortedScores = sortedScores;
+        
+        // Determine rank
+        this.rank = this.getRank();
+
+        // Start position is a wide horizontal cloud
+        this.startPos = createVector(
+          random(80, width - 80),
+          random(80, 200)
+        );
+        this.pos = this.startPos.copy();
+        this.transitionFrame = 0;
+
+        this.type = this.getTypeByRank();
+        this.anchorX = this.startPos.x;
+
+        if (this.type === 'high_rank') {
+          this.anchorY = height - 100;
+          this.velY = 0;
+          this.accY = 0.2;
+          this.bounced = false;
+        } else if (this.type === 'mid_rank') {
+          this.anchorY = map(this.score, this.sortedScores[100][1], this.sortedScores[totalImages - 101][1], height * 0.1, height * 0.85);
+        } else {
+          this.anchorY = 100;
+          this.velY = -0.5;
+          this.accY = -0.05;
+        }
+
+        this.baseSize = 40;
+        this.size = this.baseSize;
+        this.width = this.baseSize;
+        this.offset = random(1000);
+        this.isHovered = false;
+      }
+
+      getRank() {
+        // Find the index of this image's score in the sorted array
+        for(let i = 0; i < this.sortedScores.length; i++) {
+          if (this.sortedScores[i][0] === this.filename) {
+            return i; // 0-indexed rank (0 is lowest score)
+          }
+        }
+        return -1; // Should not happen if image is in scores
+      }
+
+      getTypeByRank() {
+        if (this.rank < 100) return 'low_rank'; // Bottom 100 scores float on top
+        else if (this.rank >= this.sortedScores.length - 100) return 'high_rank'; // Top 100 scores fall to bottom
+        else return 'mid_rank'; // The rest are in the middle
+      }
+
+      isMouseOver() {
+        let aspectRatio = this.img.height / this.img.width;
+        let halfWidth = (this.width / 2);
+        let halfHeight = (this.width * aspectRatio / 2);
+        
+        return mouseX > this.pos.x - halfWidth && 
+               mouseX < this.pos.x + halfWidth && 
+               mouseY > this.pos.y - halfHeight && 
+               mouseY < this.pos.y + halfHeight;
+      }
+
+      update() {
+        // Check for hover
+        this.isHovered = this.isMouseOver();
+        
+        // Update size based on hover
+        if (this.isHovered) {
+          this.size = lerp(this.size, this.baseSize * 10, 0.2);
+        } else {
+          this.size = lerp(this.size, this.baseSize, 0.2);
+        }
+        this.width = this.size;
+
+        if (this.type === 'low_rank') {
+          this.velY += this.accY;
+          this.pos.y += this.velY;
+          
+          this.pos.x += sin(frameCount * 0.02 + this.offset) * 0.5;
+          
+          if (this.pos.y < 50) {
+            this.pos.y = 50;
+            this.velY *= -0.3;
+          }
+          if (this.pos.y > 150) {
+            this.pos.y = 150;
+            this.velY *= -0.3;
+          }
+          return;
+        }
+
+        if (this.type === 'mid_rank') {
+          if (this.transitionFrame < 480) {
+            let progress = this.transitionFrame / 480;
+            let eased = easeOutCubic(progress);
+            this.pos.y = lerp(this.startPos.y, this.anchorY, eased);
+            this.transitionFrame++;
+          } else {
+            let t = frameCount * 0.01 + this.offset;
+            this.pos.y = this.anchorY + sin(t) * 3;
+          }
+        }
+
+        if (this.type === 'high_rank') {
+          if (!this.bounced) {
+            this.velY += this.accY;
+            this.pos.y += this.velY;
+
+            if (this.pos.y >= this.anchorY) {
+              this.pos.y = this.anchorY;
+              this.velY *= -0.3;
+              if (abs(this.velY) < 0.5) {
+                this.bounced = true;
+                this.velY = 0;
+              }
+            }
+          }
+        }
+      }
+
+      display() {
+        if (this.img) {
+          push();
+          imageMode(CENTER);
+          let aspectRatio = this.img.height / this.img.width;
+          image(this.img, this.pos.x, this.pos.y, this.width, this.width * aspectRatio);
+          pop();
+        }
+      }
+    }
+
+    function easeOutCubic(x) {
+      return 1 - pow(1 - x, 3);
+    }
+
+    function windowResized() {
+      resizeCanvas(windowWidth, windowHeight);
+    }
+  </script>
+</body>
+</html>
