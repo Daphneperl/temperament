@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>RGB Image Triangle 3D</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+    }
+    canvas {
+      display: block;
+    }
+    .loading-bar {
+      width: 300px;
+      height: 20px;
+      background: #333;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .loading-progress {
+      height: 100%;
+      background: #ffffff;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading-container" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+    <div class="loading-bar">
+      <div id="loading-progress" class="loading-progress" style="width: 0%"></div>
+    </div>
+    <div id="loading-text" style="color: #ffffff; font-family: monospace; margin-top: 10px;">LOADING... 0%</div>
+  </div>
+
+  <button id="mode-toggle" style="position: fixed; top: 10px; right: 20px; z-index: 10; padding: 5px; border-radius: 5px; cursor: pointer; background: none; border: none; display: none;">
+    <span id="hand-emoji" style="font-size: 24px; vertical-align: middle; margin-right: 5px;">🖐️</span>
+    <img id="toggle-icon-left" src="assets/left_toggle.png" style="width: 45px; height: 30px; vertical-align: middle; display: none;" alt="Grab Mode Icon">
+    <img id="toggle-icon-right" src="assets/right_toggle.png" style="width: 45px; height: 30px; vertical-align: middle;" alt="Rotate Mode Icon">
+    <span id="globe-emoji" style="font-size: 24px; vertical-align: middle; margin-left: 5px;">🌐</span>
+  </button>
+
+  <button id="restart-button" style="position: fixed; top: 50px; right: 20px; z-index: 10; padding: 5px; border-radius: 5px; cursor: pointer; background: none; border: none; font-size: 24px;">🔄</button>
+
+  <!-- Load p5.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+  <script>
+    let imageColorsData;
+    let images = {}; // To store loaded images and their data
+    let redPole, greenPole, bluePole; // Still define these for anchor calculation in the triangle plane
+    let easingFrames = 250; // ⏳ 3 seconds at 60fps
+
+    let imagesLoaded = 0;
+    let totalImages = 0;
+    let loadingComplete = false;
+    let loadingError = false;
+    let loadingProgress = 0;
+
+    // Mode variables
+    let currentMode = 'rotate'; // 'rotate' or 'translate'
+    let modeToggleButton;
+    let toggleIconLeft;
+    let toggleIconRight;
+    let toggleLeftContent;
+    let toggleRightContent;
+
+    let restartButton;
+
+    // Mouse interaction variables
+    let isDragging = false; // Generic flag for any drag operation
+    let prevMouseX = 0;
+    let prevMouseY = 0;
+    let isTranslating = false; // Flag for translation mode dragging
+    let isRotating = false; // Flag for rotation mode dragging
+    let mouseX3D = 0; // Store mouse position in 3D space
+    let mouseY3D = 0;
+    let mouseZ3D = 0;
+
+    // Transformation variables
+    let translateX = 0;
+    let translateY = 0;
+    let translateZ = 0; // For potential Z translation
+    let rotationX = 0;
+    let rotationY = 0;
+    let rotationZ = 0;
+
+    // Zoom variable
+    let zoomLevel = 1.2; // Increased initial zoom level from 1.0
+
+    function preload() {
+      try {
+        // Load the JSON file containing image colors
+        imageColorsData = loadJSON('image_colors.json', jsonLoaded, handleError);
+      } catch (error) {
+        console.error('Error in preload:', error);
+        handleError(error);
+      }
+    }
+
+    function handleError(error) {
+      console.error('Loading error:', error);
+      loadingError = true;
+      document.getElementById('loading-text').textContent = 'Error loading resources. Check console for details.';
+      document.getElementById('loading-text').style.color = '#ff0000';
+    }
+
+    function jsonLoaded(data) {
+      try {
+        imageColorsData = data;
+        if (!imageColorsData) {
+          throw new Error('No image colors data received');
+        }
+        
+        totalImages = Object.keys(imageColorsData).length;
+        console.log('Total images to load:', totalImages);
+        
+        if (totalImages === 0) {
+          loadingComplete = true;
+          return;
+        }
+
+        // Reset loading state
+        imagesLoaded = 0;
+        loadingProgress = 0;
+        updateLoadingUI();
+
+        for (const filename in imageColorsData) {
+          if (imageColorsData.hasOwnProperty(filename)) {
+            const hexColor = imageColorsData[filename];
+            // Store basic data, load image with callback
+            images[filename] = {
+              hex: hexColor,
+              img: loadImage('images/' + filename, () => {
+                imagesLoaded++;
+                loadingProgress = (imagesLoaded / totalImages) * 100;
+                updateLoadingUI();
+                if (imagesLoaded === totalImages) {
+                  loadingComplete = true;
+                }
+              }, handleError),
+              // RGB, anchor, pos, etc. will be set in setup
+            };
+          }
+        }
+      } catch (error) {
+        console.error('Error in jsonLoaded:', error);
+        handleError(error);
+      }
+    }
+
+    function updateLoadingUI() {
+      const progressBar = document.getElementById('loading-progress');
+      const loadingText = document.getElementById('loading-text');
+      
+      if (progressBar && loadingText) {
+        progressBar.style.width = `${loadingProgress}%`;
+        loadingText.textContent = `LOADING... ${Math.floor(loadingProgress)}%`;
+      }
+    }
+
+    function setup() {
+      createCanvas(windowWidth, windowHeight, WEBGL);
+      console.log('Setup complete, images loaded:', imagesLoaded);
+
+      // Get elements
+      modeToggleButton = document.getElementById('mode-toggle');
+      toggleIconLeft = document.getElementById('toggle-icon-left');
+      toggleIconRight = document.getElementById('toggle-icon-right');
+      toggleLeftContent = document.getElementById('toggle-left-content');
+      toggleRightContent = document.getElementById('toggle-right-content');
+
+      // Get restart button element
+      restartButton = document.getElementById('restart-button');
+
+      // Add event listener to restart button
+      if (restartButton) {
+        restartButton.addEventListener('click', restartView);
+      }
+
+      // Setup toggle button event listener and initial state
+      if (modeToggleButton) {
+        updateToggleButtonIcon();
+        modeToggleButton.addEventListener('click', toggleMode);
+      }
+
+      // Add mouse event listeners for translation
+      let canvas = select('canvas').elt; // Get the canvas element
+      canvas.addEventListener('mousedown', handleMouseDown);
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      canvas.addEventListener('wheel', handleMouseWheel);
+
+      // RGB triangle layout in the XY plane (made larger)
+      redPole = createVector(width * 0.1, height * 0.2, 0);  // Lowered from 0.15
+      greenPole = createVector(width * 0.9, height * 0.2, 0); // Lowered from 0.15
+      bluePole = createVector(width * 0.5, height * 0.9, 0);  // Lowered from 0.85
+
+      // Set up animation properties after images are loaded
+      if (imageColorsData) {
+        for (const filename in images) {
+          if (images.hasOwnProperty(filename)) {
+            const imageData = images[filename];
+            const rgb = hexToRgb(imageData.hex);
+
+            if (rgb) {
+              imageData.rgb = rgb;
+              // Calculate the anchor position in the XY plane based on average color
+              const rNorm = rgb.r / 255;
+              const gNorm = rgb.g / 255;
+              const bNorm = rgb.b / 255;
+              const total = rNorm + gNorm + bNorm;
+
+              let anchorXY;
+              if (total > 0) {
+                 anchorXY = createVector(0, 0);
+                 anchorXY.add(p5.Vector.mult(redPole, rNorm));
+                 anchorXY.add(p5.Vector.mult(greenPole, gNorm));
+                 anchorXY.add(p5.Vector.mult(bluePole, bNorm));
+                 anchorXY.div(total);
+              } else {
+                 anchorXY = createVector(width / 2, height / 2); // Handle black color
+              }
+
+              // Add a Z component to the anchor for depth
+              const anchorZ = random(-200, 200); // Reduced Z spread for anchor points
+              imageData.anchor = createVector(anchorXY.x - width / 2, anchorXY.y - height / 2, anchorZ); // Center the triangle in WEBGL mode
+
+              // Set up animation start properties (random 3D position)
+              imageData.startPos = createVector(
+                random(-width * 12, width * 12),  // Increased X spread
+                random(-height * 12, height * 12), // Increased Y spread
+                random(-2000, 2000)               // Increased Z spread
+              );
+              imageData.pos = imageData.startPos.copy(); // Start from random position
+              imageData.transitionFrame = 0;
+
+              // After-transition jitter (now in 3D)
+              imageData.offset = createVector(random(2000), random(2000), random(2000)); // Increased noise offset range
+              imageData.jitterStrength = map(rgb.r + rgb.g + rgb.b, 0, 765, 0.5, 8); // Increased jitter strength
+              imageData.jitterSpeed = map(rgb.r + rgb.g + rgb.b, 0, 765, 0.003, 0.015); // Slightly slower jitter speed
+              imageData.imageSize = 40; // Increased base image size
+
+            } else {
+              console.warn(`Could not parse color for ${filename}: ${imageData.hex}`);
+              delete images[filename]; // Remove image if color parsing failed
+            }
+          }
+        }
+      }
+
+      loadingComplete = true;
+    }
+
+    function draw() {
+      background(0);
+
+      if (!loadingComplete) {
+        // Display loading text and progress on canvas
+        ortho();
+        camera();
+        textAlign(CENTER, CENTER);
+        textSize(32);
+        fill(0, 255, 0);
+        text(`LOADING... ${Math.floor(loadingProgress)}%`, 0, 0);
+        perspective();
+        return;
+      }
+
+      // Hide loading container when complete
+      const loadingContainer = document.getElementById('loading-container');
+      if (loadingContainer) {
+        loadingContainer.style.display = 'none';
+      }
+
+      // Show the mode toggle button when loading is complete
+      if (modeToggleButton && modeToggleButton.style.display === 'none') {
+        modeToggleButton.style.display = 'block'; // Or 'inline-block'
+      }
+
+      // Update mouse position in 3D space
+      mouseX3D = mouseX - width/2;
+      mouseY3D = mouseY - height/2;
+      mouseZ3D = 0;
+
+      // Apply accumulated translation and rotation
+      translate(translateX, translateY, translateZ);
+      rotateX(rotationX);
+      rotateY(rotationY);
+      rotateZ(rotationZ);
+
+      // Apply zoom
+      scale(zoomLevel);
+
+      // Ensure lights are off for drawing textures
+      noLights();
+
+      // Update and display images (without lighting)
+      // First, create an array of images with their positions for sorting
+      let imageArray = [];
+      for (const filename in images) {
+        if (images.hasOwnProperty(filename)) {
+          const imageData = images[filename];
+          if (imageData.img && imageData.img.width > 0 && imageData.img.height > 0) {
+            // Update position based on animation logic
+            if (imageData.transitionFrame < easingFrames) {
+              let progress = imageData.transitionFrame / easingFrames;
+              let eased = easeOutCubic(progress);
+              imageData.pos = p5.Vector.lerp(imageData.startPos, imageData.anchor, eased);
+              imageData.transitionFrame++;
+            } else {
+              let t = frameCount * imageData.jitterSpeed;
+              let xJitter = (noise(imageData.offset.x + t) - 0.5) * imageData.jitterStrength;
+              let yJitter = (noise(imageData.offset.y + t + 1000) - 0.5) * imageData.jitterStrength;
+              let zJitter = (noise(imageData.offset.z + t + 2000) - 0.5) * imageData.jitterStrength;
+              imageData.pos = createVector(imageData.anchor.x + xJitter, imageData.anchor.y + yJitter, imageData.anchor.z + zJitter);
+            }
+
+            // Calculate screen position for hover detection
+            let screenPos = createVector(
+              imageData.pos.x + width/2,
+              imageData.pos.y + height/2,
+              imageData.pos.z
+            );
+            imageData.screenPos = screenPos;
+            imageArray.push(imageData);
+          }
+        }
+      }
+
+      // Sort images by Z position (back to front)
+      imageArray.sort((a, b) => b.pos.z - a.pos.z);
+
+      // Find the image closest to the mouse
+      let closestImage = null;
+      let minDist = Infinity;
+      for (let i = 0; i < imageArray.length; i++) {
+        const imageData = imageArray[i];
+        let dx = mouseX - imageData.screenPos.x;
+        let dy = mouseY - imageData.screenPos.y;
+        let dist = sqrt(dx*dx + dy*dy);
+        if (dist < minDist) {
+          minDist = dist;
+          closestImage = imageData;
+        }
+      }
+
+      // Draw images in sorted order
+      for (let i = 0; i < imageArray.length; i++) {
+        const imageData = imageArray[i];
+        
+        // Calculate hover effect
+        let hoverSize = imageData.imageSize; // Base size
+        
+        // Check if this is the closest image to the mouse
+        if (imageData === closestImage && minDist < 100) {
+          hoverSize = map(minDist, 0, 100, imageData.imageSize * 3, imageData.imageSize);
+        }
+        
+        // Always enlarge the topmost image (first in the sorted array)
+        if (i === 0) {
+          hoverSize = imageData.imageSize * 2;
+        }
+
+        // Calculate aspect ratio
+        let aspectRatio = imageData.img.width / imageData.img.height;
+        let hoverWidth = hoverSize;
+        let hoverHeight = hoverSize / aspectRatio;
+
+        // Draw the image as a textured plane
+        push();
+        translate(imageData.pos);
+
+        // Apply inverse rotation around Y-axis to face the camera horizontally
+        rotateY(-rotationY);
+        rotateX(-rotationX);
+
+        noStroke();
+        texture(imageData.img);
+        plane(hoverWidth, hoverHeight);
+        pop();
+      }
+
+      // Add some basic lighting (applied only to elements drawn after this)
+      ambientLight(60);
+      pointLight(255, 255, 255, 0, 0, 400);
+
+      // Draw RGB poles as spheres in 3D (these will be affected by the lights)
+      push();
+      translate(redPole.x - width / 2, redPole.y - height / 2, redPole.z);
+      noStroke();
+      fill(255, 0, 0);
+      box(20, 20, 2); // Red pole as a slightly thicker flat box
+      pop();
+
+      push();
+      translate(greenPole.x - width / 2, greenPole.y - height / 2, greenPole.z);
+      noStroke();
+      fill(0, 255, 0);
+      box(20, 20, 2); // Green pole as a slightly thicker flat box
+      pop();
+
+      push();
+      translate(bluePole.x - width / 2, bluePole.y - height / 2, bluePole.z);
+      noStroke();
+      fill(0, 0, 255);
+      box(20, 20, 2); // Blue pole as a slightly thicker flat box
+      pop();
+    }
+
+    // Helper function to convert hex color to RGB
+    function hexToRgb(hex) {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : null;
+    }
+
+    // Slower and smoother than exponential
+    function easeOutCubic(x) {
+      return 1 - pow(1 - x, 5);
+    }
+
+    // Mouse event handlers for canvas interaction
+    function handleMouseDown(event) {
+      // Check if the click is on the canvas
+      if (event.target === select('canvas').elt) {
+        isDragging = true;
+        prevMouseX = event.clientX;
+        prevMouseY = event.clientY;
+
+        if (currentMode === 'translate') {
+          isTranslating = true;
+          isRotating = false; // Ensure rotating is false
+        } else if (currentMode === 'rotate') {
+          isRotating = true;
+          isTranslating = false; // Ensure translating is false
+        }
+
+        event.preventDefault(); // Prevent default browser drag behavior
+      }
+    }
+
+    function handleMouseMove(event) {
+      if (isDragging) {
+        let deltaX = event.clientX - prevMouseX;
+        let deltaY = event.clientY - prevMouseY;
+
+        if (isTranslating) {
+          // Apply translation
+          translateX += deltaX;
+          translateY += deltaY;
+          // Add Z translation if needed, e.g., with shift key
+          // if (event.shiftKey) { translateZ += deltaY; }
+        } else if (isRotating) {
+          // Apply rotation
+          const rotationSpeed = 0.005; // Adjust sensitivity
+          rotationY += deltaX * rotationSpeed;
+          rotationX += deltaY * rotationSpeed;
+          // Add Z rotation if needed, e.g., with a combination of keys or movement
+          // if (event.shiftKey) { rotationZ += deltaX * rotationSpeed; }
+        }
+
+        prevMouseX = event.clientX;
+        prevMouseY = event.clientY;
+      }
+    }
+
+    function handleMouseUp(event) {
+      isDragging = false;
+      isTranslating = false;
+      isRotating = false;
+    }
+
+    function windowResized() {
+      resizeCanvas(windowWidth, windowHeight, WEBGL); // Remember WEBGL
+      // Recalculate pole positions on resize (adjusting for WEBGL center)
+      redPole = createVector(width * 0.1, height * 0.2, 0);
+      greenPole = createVector(width * 0.9, height * 0.2, 0);
+      bluePole = createVector(width * 0.5, height * 0.9, 0);
+       // Recalculating image anchor positions would also be necessary here
+       // if you want them to scale with the window size. This would involve
+       // iterating through `images`, recalculating `anchor`, and resetting `startPos` and `transitionFrame` for a new animation.
+       // For simplicity, we won't reset animation on resize in this version.
+    }
+
+    // Toggle between rotate and translate modes
+    function toggleMode() {
+      if (currentMode === 'rotate') {
+        currentMode = 'translate';
+        console.log('Mode switched to Translate');
+      } else {
+        currentMode = 'rotate';
+        console.log('Mode switched to Rotate');
+      }
+      // Reset camera controls if needed
+      // resetMatrix(); // May be needed depending on translation implementation
+
+      updateToggleButtonIcon(); // Update icon visibility after mode change
+    }
+
+    // Update the visibility of the toggle icons
+    function updateToggleButtonIcon() {
+      if (toggleIconLeft && toggleIconRight) {
+        if (currentMode === 'rotate') {
+          toggleIconLeft.style.display = 'none';
+          toggleIconRight.style.display = 'inline-block';
+          toggleIconRight.style.transform = 'translateX(9px)'; // Shift right by 12px
+        } else {
+          toggleIconLeft.style.display = 'inline-block';
+          toggleIconLeft.style.transform = 'translateX(-9px)'; // Shift left by 12px
+          toggleIconRight.style.display = 'none';
+        }
+      }
+    }
+
+    // Mouse wheel event handler for zooming
+    function handleMouseWheel(event) {
+      // Prevent default page scrolling/zooming
+      event.preventDefault();
+
+      // Adjust zoom level based on mouse wheel delta
+      // The deltaY property is typically negative for scrolling up (zooming in)
+      const zoomSpeed = 0.001; // Adjust sensitivity
+      zoomLevel -= event.deltaY * zoomSpeed;
+
+      // Constrain zoom level to prevent getting too close or too far
+      zoomLevel = constrain(zoomLevel, 0.1, 10.0); // Adjust min/max zoom as needed
+    }
+
+    // Function to reset the view transformations
+    function restartView() {
+      translateX = 0;
+      translateY = 0;
+      translateZ = 0;
+      rotationX = 0;
+      rotationY = 0;
+      rotationZ = 0;
+      zoomLevel = 1.0; // Reset zoom as well
+      console.log('View reset to initial angle.');
+    }
+  </script>
+</body>
+</html>
